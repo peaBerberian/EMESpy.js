@@ -1,0 +1,23 @@
+{
+  "name": "eme-spy",
+  "version": "1.0.0",
+  "description": "Report every EME API (for media DRMs) a webpage calls",
+  "main": "EMESpy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src/**/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peaBerberian/EMESpy.js.git"
+  },
+  "author": "peaberberian",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/peaBerberian/EMESpy.js/issues"
+  },
+  "homepage": "https://github.com/peaBerberian/EMESpy.js#readme",
+  "devDependencies": {
+    "eslint": "^4.12.1"
+  }
+}
