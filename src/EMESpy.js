@@ -3,16 +3,17 @@
  * @type {Object}
  */
 const EME_CALLS = {
-  requestMediaKeySystemAccess: [],
-  update: [],
-  load: [],
   close: [],
-  remove: [],
-  generateRequest: [],
-  createSession: [],
-  setServerCertificate: [],
   createMediaKeys: [],
+  createSession: [],
+  generateRequest: [],
   getConfiguration: [],
+  load: [],
+  remove: [],
+  requestMediaKeySystemAccess: [],
+  setMediaKeys: [],
+  setServerCertificate: [],
+  update: [],
 };
 
 /**
@@ -372,6 +373,39 @@ function spyEME() {
     return mk;
   };
 
+  const savesetMediaKeys = HTMLMediaElement.prototype.setMediaKeys;
+  HTMLMediaElement.prototype.setMediaKeys = function(...args) {
+    onAPICall("HTMLMediaElement.prototype.setMediaKeys", args);
+    const myObj = {
+      self: this,
+      date: Date.now(),
+      args,
+    };
+    EME_CALLS.setMediaKeys.push(myObj);
+    let prom;
+    try {
+      prom = savesetMediaKeys.apply(this, args);
+    } catch (e) {
+      spyLogger.error(">> HTMLMediaElement.prototype.setMediaKeys failed:", e);
+      myObj.error = e;
+      myObj.errorDate = Date.now();
+      throw e;
+    }
+    myObj.response = prom;
+    myObj.responseDate = Date.now();
+
+    prom.then((r) => {
+      spyLogger.debug(">> HTMLMediaElement.prototype.setMediaKeys resolved:", r);
+      myObj.responseResolved = r;
+      myObj.responseResolvedDate = Date.now();
+    }, (e) => {
+      spyLogger.error(">> HTMLMediaElement.prototype.setMediaKeys rejected:", e);
+      myObj.responseError = e;
+      myObj.responseErrorDate = Date.now();
+    });
+    return prom;
+  };
+
   return {
     restore: function () {
       navigator.requestMediaKeySystemAccess = saveRequestMediaKeySystemAccess;
@@ -386,6 +420,8 @@ function spyEME() {
       MediaKeys.prototype.setServerCertificate = savesetServerCertificate;
       MediaKeySystemAccess.prototype.createMediaKeys = savecreateMediaKeys;
       MediaKeySystemAccess.prototype.getConfiguration = savegetConfiguration;
+
+      HTMLMediaElement.prototype.setMediaKeys = savesetMediaKeys;
     },
   };
 }

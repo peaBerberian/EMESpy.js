@@ -15,6 +15,7 @@ Everytime any of the following API have been triggered, this tool logs the argum
   - ``MediaKeySession.prototype.generateRequest``
   - ``MediaKeys.prototype.createSession``
   - ``MediaKeys.prototype.setServerCertificate``
+  - ``HTMLMediaElement.prototype.setMediaKeys``
 
 ## How to use it
 
