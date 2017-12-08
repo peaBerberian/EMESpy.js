@@ -25,7 +25,7 @@ This tool also exposes an object, ``EME_CALLS``, containing every details about 
 
 ## Deactivating the spy
 
-You can re-deactivate the logs after adding this script by calling ``window.restoreEME()``.
+You can re-deactivate the logs after adding this script by calling ``window.restoreEME()``. The spy can be then re-activated through a ``window.spyEME()`` call.
 
 ## Defining a custom logger
 
