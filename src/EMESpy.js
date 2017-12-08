@@ -324,19 +324,28 @@ function spyEME() {
       args,
     };
     EME_CALLS.createMediaKeys.push(myObj);
-    let mk;
+    let prom;
     try {
-      mk = savecreateMediaKeys.apply(this, args);
+      prom = savecreateMediaKeys.apply(this, args);
     } catch (e) {
       spyLogger.error(">> MediaKeySystemAccess.prototype.createMediaKeys failed:", e);
       myObj.error = e;
       myObj.errorDate = Date.now();
       throw e;
     }
-    spyLogger.debug(">> MediaKeySystemAccess.prototype.createMediaKeys succeeded:", mk);
-    myObj.response = mk;
+    myObj.response = prom;
     myObj.responseDate = Date.now();
-    return mk;
+
+    prom.then((r) => {
+      spyLogger.debug(">> MediaKeySystemAccess.prototype.createMediaKeys resolved:", r);
+      myObj.responseResolved = r;
+      myObj.responseResolvedDate = Date.now();
+    }, (e) => {
+      spyLogger.error(">> MediaKeySystemAccess.prototype.createMediaKeys rejected:", e);
+      myObj.responseError = e;
+      myObj.responseErrorDate = Date.now();
+    });
+    return prom;
   };
 
   const savegetConfiguration = MediaKeySystemAccess.prototype.getConfiguration;
