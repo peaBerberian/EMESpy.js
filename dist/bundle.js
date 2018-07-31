@@ -23,12 +23,12 @@
   };
 
   /**
-   * Define the logger for spyEME.
+   * Define the logger for startEMESpy.
    * Allows to re-define a specific logger on runtime / before applying this
    * script.
    * @type {Object}
    */
-  var spyLogger = window.spyLogger || {
+  var Logger = window.Logger || {
     /* eslint-disable no-console */
     log: function log() {
       var _console;
@@ -63,7 +63,7 @@
    * @returns {Object} - Object with a "restore" function, restoring all stubs
    * done here.
    */
-  function spyEME() {
+  function startEMESpy() {
     /**
      * Log when a function is called with its arguments.
      * @param {string} fnName
@@ -71,9 +71,9 @@
      */
     function onAPICall(fnName, args) {
       if (args.length) {
-        spyLogger.debug(">>> " + fnName + " called with arguments:", args);
+        Logger.debug(">>> " + fnName + " called with arguments:", args);
       } else {
-        spyLogger.debug(">>> " + fnName + " called");
+        Logger.debug(">>> " + fnName + " called");
       }
     }
     var saveRequestMediaKeySystemAccess = navigator.requestMediaKeySystemAccess;
@@ -94,7 +94,7 @@
       try {
         prom = saveRequestMediaKeySystemAccess.apply(navigator, args);
       } catch (e) {
-        spyLogger.error(">> navigator.requestMediaKeySystemAccess failed:", e);
+        Logger.error(">> navigator.requestMediaKeySystemAccess failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -103,11 +103,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> navigator.requestMediaKeySystemAccess resolved:", r);
+        Logger.debug(">> navigator.requestMediaKeySystemAccess resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> navigator.requestMediaKeySystemAccess rejected:", e);
+        Logger.error(">> navigator.requestMediaKeySystemAccess rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -131,7 +131,7 @@
       try {
         prom = saveUpdate.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySession.prototype.update failed:", e);
+        Logger.error(">> MediaKeySession.prototype.update failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -140,11 +140,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeySession.prototype.update resolved:", r);
+        Logger.debug(">> MediaKeySession.prototype.update resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeySession.prototype.update rejected:", e);
+        Logger.error(">> MediaKeySession.prototype.update rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -168,7 +168,7 @@
       try {
         prom = saveload.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySession.prototype.load failed:", e);
+        Logger.error(">> MediaKeySession.prototype.load failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -177,11 +177,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeySession.prototype.load resolved:", r);
+        Logger.debug(">> MediaKeySession.prototype.load resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeySession.prototype.load rejected:", e);
+        Logger.error(">> MediaKeySession.prototype.load rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -205,7 +205,7 @@
       try {
         prom = saveremove.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySession.prototype.remove failed:", e);
+        Logger.error(">> MediaKeySession.prototype.remove failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -214,11 +214,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeySession.prototype.remove resolved:", r);
+        Logger.debug(">> MediaKeySession.prototype.remove resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeySession.prototype.remove rejected:", e);
+        Logger.error(">> MediaKeySession.prototype.remove rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -242,7 +242,7 @@
       try {
         prom = saveclose.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySession.prototype.close failed:", e);
+        Logger.error(">> MediaKeySession.prototype.close failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -251,11 +251,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeySession.prototype.close resolved:", r);
+        Logger.debug(">> MediaKeySession.prototype.close resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeySession.prototype.close rejected:", e);
+        Logger.error(">> MediaKeySession.prototype.close rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -279,7 +279,7 @@
       try {
         prom = savegenerateRequest.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySession.prototype.generateRequest failed:", e);
+        Logger.error(">> MediaKeySession.prototype.generateRequest failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -288,11 +288,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeySession.prototype.generateRequest resolved:", r);
+        Logger.debug(">> MediaKeySession.prototype.generateRequest resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeySession.prototype.generateRequest rejected:", e);
+        Logger.error(">> MediaKeySession.prototype.generateRequest rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -316,12 +316,12 @@
       try {
         session = savecreateSession.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeys.prototype.createSession failed:", e);
+        Logger.error(">> MediaKeys.prototype.createSession failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
       }
-      spyLogger.debug(">> MediaKeys.prototype.createSession succeeded:", session);
+      Logger.debug(">> MediaKeys.prototype.createSession succeeded:", session);
       myObj.response = session;
       myObj.responseDate = Date.now();
       return session;
@@ -344,7 +344,7 @@
       try {
         prom = savesetServerCertificate.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeys.prototype.setServerCertificate failed:", e);
+        Logger.error(">> MediaKeys.prototype.setServerCertificate failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -353,11 +353,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeys.prototype.setServerCertificate resolved:", r);
+        Logger.debug(">> MediaKeys.prototype.setServerCertificate resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeys.prototype.setServerCertificate rejected:", e);
+        Logger.error(">> MediaKeys.prototype.setServerCertificate rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -381,7 +381,7 @@
       try {
         prom = savecreateMediaKeys.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySystemAccess.prototype.createMediaKeys failed:", e);
+        Logger.error(">> MediaKeySystemAccess.prototype.createMediaKeys failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -390,11 +390,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> MediaKeySystemAccess.prototype.createMediaKeys resolved:", r);
+        Logger.debug(">> MediaKeySystemAccess.prototype.createMediaKeys resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> MediaKeySystemAccess.prototype.createMediaKeys rejected:", e);
+        Logger.error(">> MediaKeySystemAccess.prototype.createMediaKeys rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -418,12 +418,12 @@
       try {
         mk = savegetConfiguration.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> MediaKeySystemAccess.prototype.getConfiguration failed:", e);
+        Logger.error(">> MediaKeySystemAccess.prototype.getConfiguration failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
       }
-      spyLogger.debug(">> MediaKeySystemAccess.prototype.getConfiguration succeeded:", mk);
+      Logger.debug(">> MediaKeySystemAccess.prototype.getConfiguration succeeded:", mk);
       myObj.response = mk;
       myObj.responseDate = Date.now();
       return mk;
@@ -446,7 +446,7 @@
       try {
         prom = savesetMediaKeys.apply(this, args);
       } catch (e) {
-        spyLogger.error(">> HTMLMediaElement.prototype.setMediaKeys failed:", e);
+        Logger.error(">> HTMLMediaElement.prototype.setMediaKeys failed:", e);
         myObj.error = e;
         myObj.errorDate = Date.now();
         throw e;
@@ -455,11 +455,11 @@
       myObj.responseDate = Date.now();
 
       prom.then(function (r) {
-        spyLogger.debug(">> HTMLMediaElement.prototype.setMediaKeys resolved:", r);
+        Logger.debug(">> HTMLMediaElement.prototype.setMediaKeys resolved:", r);
         myObj.responseResolved = r;
         myObj.responseResolvedDate = Date.now();
       }, function (e) {
-        spyLogger.error(">> HTMLMediaElement.prototype.setMediaKeys rejected:", e);
+        Logger.error(">> HTMLMediaElement.prototype.setMediaKeys rejected:", e);
         myObj.responseError = e;
         myObj.responseErrorDate = Date.now();
       });
@@ -487,10 +487,8 @@
   }
 
   exports.EME_CALLS = EME_CALLS;
-  exports.spyLogger = spyLogger;
-  exports.spyEME = spyEME;
-  exports.restoreEME = restoreEME;
-  exports.default = spyEME;
+  exports.Logger = Logger;
+  exports.startEMESpy = startEMESpy;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
