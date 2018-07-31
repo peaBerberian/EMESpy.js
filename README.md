@@ -69,7 +69,7 @@ EMESpy.Logger.error = function(...args) {
 ```
 
 Note: You can also add the script in [dist/bundle.js
-](https://github.com/peaBerberian/EMESpy.js/blob/master/src/EMESpy.js) in your
-wanted page directly (e.g. via the inspector).
+](https://raw.githubusercontent.com/peaBerberian/EMESpy.js/master/dist/bundle.js)
+in your wanted page directly (e.g. via the inspector).
 You can then call any function through a `"EME_SPY"` object newly created in
 `window`.
