@@ -1,8 +1,8 @@
 {
   "name": "eme-spy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Report every EME API (for media DRMs) a webpage calls",
-  "main": "EMESpy.js",
+  "main": "dist/bundle.js",
   "scripts": {
     "build": "rollup -c",
     "lint": "eslint src/**/*.js"
