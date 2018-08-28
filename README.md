@@ -131,7 +131,7 @@ EMESpy.start();
 
 // You can also declare custom log functions
 // (More informations on it in the concerned chapter)
-EMESpy.Logger.debug = CustomLogger;
+EMESpy.Logger.onPropertyAccess = CustomLogger;
 ```
 
 
