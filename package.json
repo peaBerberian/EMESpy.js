@@ -18,10 +18,10 @@
   },
   "homepage": "https://github.com/peaBerberian/EMESpy.js#readme",
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0",
-    "eslint": "^4.19.1",
-    "rollup": "^0.63.4",
-    "rollup-plugin-babel": "^3.0.7"
+    "@babel/core": "7.4.4",
+    "@babel/preset-env": "7.4.4",
+    "eslint": "5.16.0",
+    "rollup": "1.12.3",
+    "rollup-plugin-babel": "4.3.2"
   }
 }

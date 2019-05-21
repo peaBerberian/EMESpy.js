@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.EMESpy = {})));
-}(this, (function (exports) { 'use strict';
+  (global = global || self, factory(global.EMESpy = {}));
+}(this, function (exports) { 'use strict';
 
   /**
    * Store information about every EME Calls stubbed in this file.
@@ -39,9 +39,8 @@
      * @param {*} value - the value it currently has.
      */
     onPropertyAccess: function onPropertyAccess(pathString, value) {
-      console.debug(">>> Getting " + pathString + ":", value);
+      console.debug(">>> Getting ".concat(pathString, ":"), value);
     },
-
 
     /**
      * Triggered each time a property is set.
@@ -49,9 +48,8 @@
      * @param {*} value - the value it is set to.
      */
     onSettingProperty: function onSettingProperty(pathString, value) {
-      console.debug(">> Setting " + pathString + ":", value);
+      console.debug(">> Setting ".concat(pathString, ":"), value);
     },
-
 
     /**
      * Triggered when some object is instanciated (just before).
@@ -60,12 +58,11 @@
      */
     onObjectInstanciation: function onObjectInstanciation(objectName, args) {
       if (args.length) {
-        console.debug(">>> Creating " + objectName + " with arguments:", args);
+        console.debug(">>> Creating ".concat(objectName, " with arguments:"), args);
       } else {
-        console.debug(">>> Creating " + objectName);
+        console.debug(">>> Creating ".concat(objectName));
       }
     },
-
 
     /**
      * Triggered when an Object instanciation failed.
@@ -73,9 +70,8 @@
      * @param {Error} error - Error thrown by the constructor
      */
     onObjectInstanciationError: function onObjectInstanciationError(objectName, error) {
-      console.error(">> " + objectName + " creation failed:", error);
+      console.error(">> ".concat(objectName, " creation failed:"), error);
     },
-
 
     /**
      * Triggered when an Object instanciation succeeded.
@@ -83,9 +79,8 @@
      * @param {*} value - The corresponding object instanciated.
      */
     onObjectInstanciationSuccess: function onObjectInstanciationSuccess(objectName, value) {
-      console.debug(">>> " + objectName + " created:", value);
+      console.debug(">>> ".concat(objectName, " created:"), value);
     },
-
 
     /**
      * Triggered when some method/function is called.
@@ -94,12 +89,11 @@
      */
     onFunctionCall: function onFunctionCall(pathName, args) {
       if (args.length) {
-        console.debug(">>> " + pathName + " called with arguments:", args);
+        console.debug(">>> ".concat(pathName, " called with arguments:"), args);
       } else {
-        console.debug(">>> " + pathName + " called");
+        console.debug(">>> ".concat(pathName, " called"));
       }
     },
-
 
     /**
      * Triggered when a function call fails.
@@ -107,9 +101,8 @@
      * @param {Error} error - Error thrown by the call
      */
     onFunctionCallError: function onFunctionCallError(pathName, error) {
-      console.error(">> " + pathName + " failed:", error);
+      console.error(">> ".concat(pathName, " failed:"), error);
     },
-
 
     /**
      * Triggered when a function call succeeded.
@@ -117,9 +110,8 @@
      * @param {*} value - The result of the function
      */
     onFunctionCallSuccess: function onFunctionCallSuccess(pathName, value) {
-      console.info(">>> " + pathName + " succeeded:", value);
+      console.info(">>> ".concat(pathName, " succeeded:"), value);
     },
-
 
     /**
      * Triggered when a function returned a Promise and that promise resolved.
@@ -127,9 +119,8 @@
      * @param {*} value - The value when the function resolved.
      */
     onFunctionPromiseResolve: function onFunctionPromiseResolve(pathName, value) {
-      console.info(">>> " + pathName + " resolved:", value);
+      console.info(">>> ".concat(pathName, " resolved:"), value);
     },
-
 
     /**
      * Triggered when a function returned a Promise and that promise rejected.
@@ -137,18 +128,57 @@
      * @param {*} value - The error when the function's promise rejected.
      */
     onFunctionPromiseReject: function onFunctionPromiseReject(pathName, value) {
-      console.error(">>> " + pathName + " rejected:", value);
+      console.error(">>> ".concat(pathName, " rejected:"), value);
     }
   };
 
-  var id = 0;
+  function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+      o.__proto__ = p;
+      return o;
+    };
 
+    return _setPrototypeOf(o, p);
+  }
+
+  function isNativeReflectConstruct() {
+    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+    if (Reflect.construct.sham) return false;
+    if (typeof Proxy === "function") return true;
+
+    try {
+      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function _construct(Parent, args, Class) {
+    if (isNativeReflectConstruct()) {
+      _construct = Reflect.construct;
+    } else {
+      _construct = function _construct(Parent, args, Class) {
+        var a = [null];
+        a.push.apply(a, args);
+        var Constructor = Function.bind.apply(Parent, a);
+        var instance = new Constructor();
+        if (Class) _setPrototypeOf(instance, Class.prototype);
+        return instance;
+      };
+    }
+
+    return _construct.apply(null, arguments);
+  }
+
+  var id = 0;
   /**
    * Generate a new number each time it is called.
    * /!\ Never check for an upper-bound. Please do not use if you can reach
    * `Number.MAX_VALUE`
    * @returns {number}
    */
+
   function generateId() {
     return id++;
   }
@@ -211,6 +241,7 @@
    *
    * @returns {Function} - function which deactivates the spy when called.
    */
+
   function spyOnMethods(baseObject, methodNames, humanReadablePath, logObject) {
     var baseObjectMethods = methodNames.reduce(function (acc, methodName) {
       acc[methodName] = baseObject[methodName];
@@ -227,7 +258,7 @@
       }
 
       baseObject[methodName] = function () {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
           args[_key] = arguments[_key];
         }
 
@@ -242,9 +273,10 @@
         if (!logObject[methodName]) {
           logObject[methodName] = [];
         }
-        logObject[methodName].push(currentLogObject);
 
-        var res = void 0;
+        logObject[methodName].push(currentLogObject);
+        var res;
+
         try {
           res = oldMethod.apply(this, args);
         } catch (e) {
@@ -253,26 +285,25 @@
           currentLogObject.errorDate = Date.now();
           throw e;
         }
+
         Logger.onFunctionCallSuccess(completePath, res);
         currentLogObject.response = res;
         currentLogObject.responseDate = Date.now();
 
         if (res instanceof Promise) {
-          res.then(
-          // on success
+          res.then( // on success
           function (value) {
             Logger.onFunctionPromiseResolve(completePath, value);
             currentLogObject.responseResolved = value;
             currentLogObject.responseResolvedDate = Date.now();
-          },
-
-          // on error
+          }, // on error
           function (err) {
             Logger.onFunctionPromiseReject(completePath, err);
             currentLogObject.responseRejected = err;
             currentLogObject.responseRejectedDate = Date.now();
           });
         }
+
         return res;
       };
     };
@@ -283,8 +314,8 @@
 
     return function stopSpyingOnMethods() {
       for (var i = 0; i < methodNames.length; i++) {
-        var _methodName = methodNames[i];
-        baseObject[_methodName] = baseObjectMethods[_methodName];
+        var methodName = methodNames[i];
+        baseObject[methodName] = baseObjectMethods[methodName];
       }
     };
   }
@@ -325,6 +356,7 @@
    *
    * @returns {Function} - function which deactivates the spy when called.
    */
+
   function spyOnReadOnlyProperties(baseObject, baseDescriptors, propertyNames, humanReadablePath, logObject) {
     var _loop = function _loop(i) {
       var propertyName = propertyNames[i];
@@ -345,11 +377,13 @@
             date: Date.now(),
             value: value
           };
+
           if (!logObject[propertyName]) {
             logObject[propertyName] = {
               get: []
             };
           }
+
           logObject[propertyName].get.push(currentLogObject);
           return value;
         }
@@ -419,6 +453,7 @@
    *
    * @returns {Function} - function which deactivates the spy when called.
    */
+
   function spyOnProperties(baseObject, baseDescriptors, propertyNames, humanReadablePath, logObject) {
     var _loop = function _loop(i) {
       var propertyName = propertyNames[i];
@@ -446,8 +481,8 @@
               get: []
             };
           }
-          logObject[propertyName].get.push(currentLogObject);
 
+          logObject[propertyName].get.push(currentLogObject);
           return value;
         },
         set: function set(value) {
@@ -465,6 +500,7 @@
               get: []
             };
           }
+
           logObject[propertyName].set.push(currentLogObject);
           baseDescriptor.set.bind(this)(value);
         }
@@ -490,16 +526,17 @@
 
     if (loggingObject[objectName] == null) {
       loggingObject[objectName] = {
-        new: [],
+        "new": [],
         methods: {},
         staticMethods: {},
         properties: {},
         eventListeners: {} // TODO
+
       };
     }
 
     function StubbedObject() {
-      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
 
@@ -509,16 +546,18 @@
         date: now,
         args: args
       };
-      loggingObject[objectName].new.push(spyObj);
-      var baseObject = void 0;
+      loggingObject[objectName]["new"].push(spyObj);
+      var baseObject;
+
       try {
-        baseObject = new (Function.prototype.bind.apply(BaseObject, [null].concat(args)))();
+        baseObject = _construct(BaseObject, args);
       } catch (e) {
         Logger.onObjectInstanciationError(objectName, e);
         spyObj.error = e;
         spyObj.errorDate = Date.now();
         throw e;
       }
+
       Logger.onObjectInstanciationSuccess(objectName, baseObject);
       spyObj.response = baseObject;
       spyObj.responseDate = Date.now();
@@ -529,14 +568,11 @@
     staticMethodNames.forEach(function (method) {
       StubbedObject[method] = BaseObject[method].bind(BaseObject);
     });
-
     var BaseObjectProtoDescriptors = Object.getOwnPropertyDescriptors(BaseObject.prototype);
-
-    var unspyReadOnlyProps = spyOnReadOnlyProperties(BaseObject.prototype, BaseObjectProtoDescriptors, readOnlyPropertyNames, objectName + ".prototype", loggingObject[objectName].properties);
-    var unspyProps = spyOnProperties(BaseObject.prototype, BaseObjectProtoDescriptors, propertyNames, objectName + ".prototype", loggingObject[objectName].properties);
-    var unspyMethods = spyOnMethods(BaseObject.prototype, methodNames, objectName + ".prototype", loggingObject[objectName].methods);
+    var unspyReadOnlyProps = spyOnReadOnlyProperties(BaseObject.prototype, BaseObjectProtoDescriptors, readOnlyPropertyNames, "".concat(objectName, ".prototype"), loggingObject[objectName].properties);
+    var unspyProps = spyOnProperties(BaseObject.prototype, BaseObjectProtoDescriptors, propertyNames, "".concat(objectName, ".prototype"), loggingObject[objectName].properties);
+    var unspyMethods = spyOnMethods(BaseObject.prototype, methodNames, "".concat(objectName, ".prototype"), loggingObject[objectName].methods);
     window[objectName] = StubbedObject;
-
     return function stopSpying() {
       unspyReadOnlyProps();
       unspyProps();
@@ -547,74 +583,35 @@
   }
 
   function spyOnMediaKeys() {
-    return spyOnWholeObject(
-    // Object to spy on
-    NativeMediaKeys,
-
-    // name in window
-    "MediaKeys",
-
-    // read-only properties
-    [],
-
-    // regular properties
-    [],
-
-    // static methods
-    [],
-
-    // methods
-    ["createSession", "setServerCertificate"],
-
-    // global logging object
+    return spyOnWholeObject( // Object to spy on
+    NativeMediaKeys, // name in window
+    "MediaKeys", // read-only properties
+    [], // regular properties
+    [], // static methods
+    [], // methods
+    ["createSession", "setServerCertificate"], // global logging object
     EME_CALLS);
   }
 
   function spyOnMediaKeySession() {
-    return spyOnWholeObject(
-    // Object to spy on
-    NativeMediaKeySession,
-
-    // name in window
-    "MediaKeySession",
-
-    // read-only properties
-    ["sessionId", "expiration", "closed", "keyStatuses"],
-
-    // regular properties
-    [],
-
-    // static methods
-    [],
-
-    // methods
-    ["generateRequest", "load", "update", "close", "remove"],
-
-    // global logging object
+    return spyOnWholeObject( // Object to spy on
+    NativeMediaKeySession, // name in window
+    "MediaKeySession", // read-only properties
+    ["sessionId", "expiration", "closed", "keyStatuses"], // regular properties
+    [], // static methods
+    [], // methods
+    ["generateRequest", "load", "update", "close", "remove"], // global logging object
     EME_CALLS);
   }
 
   function spyOnMediaKeySystemAccess() {
-    return spyOnWholeObject(
-    // Object to spy on
-    NativeMediaKeySystemAccess,
-
-    // name in window
-    "MediaKeySystemAccess",
-
-    // read-only properties
-    ["keySystem"],
-
-    // regular properties
-    [],
-
-    // static methods
-    [],
-
-    // methods
-    ["getConfiguration", "createMediaKeys"],
-
-    // global logging object
+    return spyOnWholeObject( // Object to spy on
+    NativeMediaKeySystemAccess, // name in window
+    "MediaKeySystemAccess", // read-only properties
+    ["keySystem"], // regular properties
+    [], // static methods
+    [], // methods
+    ["getConfiguration", "createMediaKeys"], // global logging object
     EME_CALLS);
   }
 
@@ -627,10 +624,10 @@
   }
 
   var resetSpies = null;
-
   /**
    * Start/restart spying on EME API calls.
    */
+
   function start() {
     if (resetSpies != null) {
       resetSpies();
@@ -648,22 +645,23 @@
       resetSpies = null;
     };
   }
-
   /**
    * Stop spying on EME API calls.
    */
+
+
   function stop() {
     if (resetSpies != null) {
       resetSpies();
     }
   }
 
+  exports.Logger = Logger;
   exports.getEMECalls = getEMECalls;
   exports.resetEMECalls = resetEMECalls;
-  exports.Logger = Logger;
   exports.start = start;
   exports.stop = stop;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));

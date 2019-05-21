@@ -9,8 +9,7 @@ export default {
     name: "EMESpy",
   },
   plugins: [
-    babel({
-      exclude: 'node_modules/**' // only transpile our source code
-    })
-  ]
+    // only transpile our source code
+    babel({ exclude: "node_modules/**"}),
+  ],
 };
