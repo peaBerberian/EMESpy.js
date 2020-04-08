@@ -65,8 +65,8 @@ export default function spyOnProperties(
     const completePath = humanReadablePath + "." + propertyName;
 
     if (!baseDescriptor) {
-      throw new Error("No descriptor for property " +
-        completePath);
+      console.warn("No descriptor for property " + completePath);
+      continue;
     }
 
     Object.defineProperty(baseObject, propertyName, {

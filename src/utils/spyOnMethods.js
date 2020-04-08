@@ -77,7 +77,8 @@ export default function spyOnMethods(
     const oldMethod = baseObject[methodName];
 
     if (!oldMethod) {
-      throw new Error("No method in " + completePath);
+      console.warn("No method in " + completePath);
+      continue;
     }
 
     baseObject[methodName] = function (...args) {
