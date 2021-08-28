@@ -10,7 +10,7 @@ export default function spyOnWholeObject(
   propertyNames,
   staticMethodNames,
   methodNames,
-  loggingObject
+  loggingObject,
 ) {
   if (BaseObject == null || !BaseObject.prototype) {
     throw new Error("Invalid object");

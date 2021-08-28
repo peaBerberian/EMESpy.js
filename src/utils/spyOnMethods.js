@@ -77,6 +77,7 @@ export default function spyOnMethods(
     const oldMethod = baseObject[methodName];
 
     if (!oldMethod) {
+      /* eslint-disable-next-line no-console */
       console.warn("No method in " + completePath);
       continue;
     }
@@ -122,7 +123,7 @@ export default function spyOnMethods(
             Logger.onFunctionPromiseReject(completePath, err);
             currentLogObject.responseRejected = err;
             currentLogObject.responseRejectedDate = Date.now();
-          }
+          },
         );
       }
       return res;

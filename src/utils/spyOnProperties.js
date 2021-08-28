@@ -57,7 +57,7 @@ export default function spyOnProperties(
   baseDescriptors,
   propertyNames,
   humanReadablePath,
-  logObject
+  logObject,
 ) {
   for (let i = 0; i < propertyNames.length; i++) {
     const propertyName = propertyNames[i];
@@ -65,6 +65,7 @@ export default function spyOnProperties(
     const completePath = humanReadablePath + "." + propertyName;
 
     if (!baseDescriptor) {
+      /* eslint-disable-next-line no-console */
       console.warn("No descriptor for property " + completePath);
       continue;
     }
@@ -117,7 +118,7 @@ export default function spyOnProperties(
         .reduce((acc, propertyName) => {
           acc[propertyName] = baseDescriptors[propertyName];
           return acc;
-        }, {})
+        }, {}),
     );
   };
 }

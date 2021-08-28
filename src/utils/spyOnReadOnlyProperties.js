@@ -50,6 +50,7 @@ export default function spyOnReadOnlyProperties(
     const completePath = humanReadablePath + "." + propertyName;
 
     if (!baseDescriptor) {
+      /* eslint-disable-next-line no-console */
       console.warn("No descriptor for property " + completePath);
       continue;
     }
@@ -81,7 +82,7 @@ export default function spyOnReadOnlyProperties(
         .reduce((acc, propertyName) => {
           acc[propertyName] = baseDescriptors[propertyName];
           return acc;
-        }, {})
+        }, {}),
     );
   };
 }
