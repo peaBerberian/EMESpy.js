@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = global || self, factory(global.EMESpy = {}));
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.EMESpy = {}));
 }(this, (function (exports) { 'use strict';
 
   /**
@@ -149,7 +149,7 @@
     if (typeof Proxy === "function") return true;
 
     try {
-      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
       return true;
     } catch (e) {
       return false;
@@ -256,6 +256,7 @@
       var oldMethod = baseObject[methodName];
 
       if (!oldMethod) {
+        /* eslint-disable-next-line no-console */
         console.warn("No method in " + completePath);
         return "continue";
       }
@@ -369,6 +370,7 @@
       var completePath = humanReadablePath + "." + propertyName;
 
       if (!baseDescriptor) {
+        /* eslint-disable-next-line no-console */
         console.warn("No descriptor for property " + completePath);
         return "continue";
       }
@@ -469,6 +471,7 @@
       var completePath = humanReadablePath + "." + propertyName;
 
       if (!baseDescriptor) {
+        /* eslint-disable-next-line no-console */
         console.warn("No descriptor for property " + completePath);
         return "continue";
       }
