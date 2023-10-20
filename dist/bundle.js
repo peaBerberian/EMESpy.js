@@ -243,7 +243,7 @@
         }
         Logger.onFunctionCall(completePath, args);
         var currentLogObject = {
-          self: baseObject,
+          self: this,
           id: generateId(),
           date: Date.now(),
           args: args

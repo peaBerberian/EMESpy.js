@@ -85,7 +85,7 @@ export default function spyOnMethods(
     baseObject[methodName] = function (...args) {
       Logger.onFunctionCall(completePath, args);
       const currentLogObject = {
-        self: baseObject,
+        self: this,
         id: generateId(),
         date: Date.now(),
         args,
