@@ -1,6 +1,6 @@
 {
   "name": "eme-spy",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Report every EME API (for media DRMs) a webpage calls",
   "main": "dist/bundle.js",
   "scripts": {
