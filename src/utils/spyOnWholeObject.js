@@ -13,7 +13,8 @@ export default function spyOnWholeObject(
   loggingObject,
 ) {
   if (BaseObject == null || !BaseObject.prototype) {
-    throw new Error("Invalid object");
+    console.warn(`Cannot spy on ${objectName}: native object is unavailable`);
+    return null;
   }
 
   if (loggingObject[objectName] == null) {
@@ -22,7 +23,7 @@ export default function spyOnWholeObject(
       methods: {},
       staticMethods: {},
       properties: {},
-      eventListeners: {}, // TODO
+      eventListeners: {},
     };
   }
 
@@ -47,6 +48,15 @@ export default function spyOnWholeObject(
     spyObj.response = baseObject;
     spyObj.responseDate = Date.now();
     return baseObject;
+  }
+
+  StubbedObject.prototype = BaseObject.prototype;
+  if (Object.setPrototypeOf) {
+    try {
+      Object.setPrototypeOf(StubbedObject, BaseObject);
+    } catch (e) {
+      console.warn(`Cannot copy ${objectName}'s static prototype`, e);
+    }
   }
 
   const unspyStaticMethods = spyOnMethods(

@@ -17,33 +17,49 @@
       delete EME_CALLS[key];
     });
   }
-  var NativeMediaKeys = window.MediaKeys;
-  var NativeMediaKeySession = window.MediaKeySession;
-  var NativeMediaKeySystemAccess = window.MediaKeySystemAccess;
+  var currentWindow$1 = typeof window !== "undefined" ? window : {};
+  var NativeMediaEncryptedEvent = currentWindow$1.MediaEncryptedEvent;
+  var NativeMediaKeyMessageEvent = currentWindow$1.MediaKeyMessageEvent;
+  var NativeMediaKeys = currentWindow$1.MediaKeys;
+  var NativeMediaKeySession = currentWindow$1.MediaKeySession;
+  var NativeMediaKeyStatusMap = currentWindow$1.MediaKeyStatusMap;
+  var NativeMediaKeySystemAccess = currentWindow$1.MediaKeySystemAccess;
 
-  function _construct(t, e, r) {
-    if (_isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
-    var o = [null];
-    o.push.apply(o, e);
-    var p = new (t.bind.apply(t, o))();
-    return p;
+  var id = 0;
+
+  /**
+   * Generate a new number each time it is called.
+   * /!\ Never check for an upper-bound. Please do not use if you can reach
+   * `Number.MAX_VALUE`
+   * @returns {number}
+   */
+  function generateId() {
+    return id++;
   }
-  function _isNativeReflectConstruct() {
-    try {
-      var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-    } catch (t) {}
-    return (_isNativeReflectConstruct = function () {
-      return !!t;
-    })();
+
+  function getPropertyDescriptor(baseObject, propertyName) {
+    var currentObject = baseObject;
+    while (currentObject != null) {
+      var descriptor = Object.getOwnPropertyDescriptor(currentObject, propertyName);
+      if (descriptor != null) {
+        return {
+          descriptor: descriptor,
+          owner: currentObject
+        };
+      }
+      currentObject = Object.getPrototypeOf(currentObject);
+    }
+    return null;
   }
 
   /**
-   * Define the logger for the MSE-spy.
+   * Define the logger for EMESpy.
    * Allows to re-define a specific logger on runtime / before applying this
    * script.
    * @type {Object}
    */
-  var Logger = window.MSESpyLogger || {
+  var currentWindow = typeof window !== "undefined" ? window : {};
+  var defaultLogger = {
     /**
      * Triggered each time a property is accessed.
      * @param {string} pathString - human-readable path to the property.
@@ -131,19 +147,288 @@
      */
     onFunctionPromiseReject: function onFunctionPromiseReject(pathName, value) {
       console.error(">>> ".concat(pathName, " rejected:"), value);
+    },
+    onEventListenerAdd: function onEventListenerAdd(pathName, eventName, listener) {
+      console.debug(">>> ".concat(pathName, ".addEventListener(\"").concat(eventName, "\") called:"), listener);
+    },
+    onEventListenerRemove: function onEventListenerRemove(pathName, eventName, listener) {
+      console.debug(">>> ".concat(pathName, ".removeEventListener(\"").concat(eventName, "\") called:"), listener);
+    },
+    onEvent: function onEvent(pathName, event) {
+      console.debug(">>> ".concat(pathName, " event received:"), event);
     }
   };
+  var Logger = Object.assign({}, defaultLogger, currentWindow.EMESpyLogger || currentWindow.MSESpyLogger);
 
-  var id = 0;
+  function getEventLog$1(logObject, eventName) {
+    if (logObject[eventName] == null) {
+      logObject[eventName] = {
+        eventHandler: {
+          get: [],
+          set: [],
+          calls: []
+        }
+      };
+    } else if (logObject[eventName].eventHandler == null) {
+      logObject[eventName].eventHandler = {
+        get: [],
+        set: [],
+        calls: []
+      };
+    }
+    return logObject[eventName].eventHandler;
+  }
+  function spyOnEventHandlerProperties(baseObject, eventHandlerNames, humanReadablePath, logObject) {
+    if (baseObject == null) {
+      console.warn("Cannot spy on ".concat(humanReadablePath, ": object is unavailable"));
+      return null;
+    }
+    var spiedProperties = [];
+    var _loop = function _loop() {
+      var propertyName = eventHandlerNames[i];
+      var descriptorInfo = getPropertyDescriptor(baseObject, propertyName);
+      var completePath = "".concat(humanReadablePath, ".").concat(propertyName);
+      var eventName = propertyName.startsWith("on") ? propertyName.slice(2) : propertyName;
+      var originalHandlers = new WeakMap();
+      if (descriptorInfo == null || descriptorInfo.descriptor.get == null || descriptorInfo.descriptor.set == null) {
+        console.warn("No descriptor for event handler property ".concat(completePath));
+        return 1; // continue
+      }
+      var baseDescriptor = descriptorInfo.descriptor;
+      Object.defineProperty(baseObject, propertyName, {
+        configurable: true,
+        enumerable: baseDescriptor.enumerable,
+        get: function get() {
+          var value = baseDescriptor.get.call(this);
+          var originalValue = originalHandlers.get(value) || value;
+          Logger.onPropertyAccess(completePath, originalValue);
+          getEventLog$1(logObject, eventName).get.push({
+            self: this,
+            id: generateId(),
+            date: Date.now(),
+            value: originalValue
+          });
+          return originalValue;
+        },
+        set: function set(value) {
+          Logger.onSettingProperty(completePath, value);
+          getEventLog$1(logObject, eventName).set.push({
+            self: this,
+            id: generateId(),
+            date: Date.now(),
+            value: value
+          });
+          if (typeof value !== "function") {
+            baseDescriptor.set.call(this, value);
+            return;
+          }
+          var wrappedHandler = function emeSpyEventHandler(event) {
+            Logger.onEvent(completePath, event);
+            getEventLog$1(logObject, eventName).calls.push({
+              self: this,
+              id: generateId(),
+              date: Date.now(),
+              event: event,
+              listener: value
+            });
+            return value.call(this, event);
+          };
+          originalHandlers.set(wrappedHandler, value);
+          baseDescriptor.set.call(this, wrappedHandler);
+        }
+      });
+      spiedProperties.push({
+        descriptor: baseDescriptor,
+        owner: descriptorInfo.owner,
+        propertyName: propertyName
+      });
+    };
+    for (var i = 0; i < eventHandlerNames.length; i++) {
+      if (_loop()) continue;
+    }
+    return function stopSpyingOnEventHandlerProperties() {
+      for (var _i = 0; _i < spiedProperties.length; _i++) {
+        var spiedProperty = spiedProperties[_i];
+        if (spiedProperty.owner === baseObject) {
+          Object.defineProperty(baseObject, spiedProperty.propertyName, spiedProperty.descriptor);
+        } else {
+          delete baseObject[spiedProperty.propertyName];
+        }
+      }
+    };
+  }
 
-  /**
-   * Generate a new number each time it is called.
-   * /!\ Never check for an upper-bound. Please do not use if you can reach
-   * `Number.MAX_VALUE`
-   * @returns {number}
-   */
-  function generateId() {
-    return id++;
+  function _construct(t, e, r) {
+    if (_isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
+    var o = [null];
+    o.push.apply(o, e);
+    var p = new (t.bind.apply(t, o))();
+    return p;
+  }
+  function _isNativeReflectConstruct() {
+    try {
+      var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    } catch (t) {}
+    return (_isNativeReflectConstruct = function () {
+      return !!t;
+    })();
+  }
+  function _typeof(o) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof(o);
+  }
+
+  function getEventLog(logObject, eventName) {
+    if (logObject[eventName] == null) {
+      logObject[eventName] = {
+        addEventListener: [],
+        removeEventListener: [],
+        listenerCalls: []
+      };
+    }
+    return logObject[eventName];
+  }
+  function getListenerKey(eventName, options) {
+    var capture = typeof options === "boolean" ? options : (options === null || options === void 0 ? void 0 : options.capture) === true;
+    return "".concat(eventName, ":").concat(capture);
+  }
+  function getListenerRecord(listenerMap, eventName, listener) {
+    if (typeof listener !== "function" && (_typeof(listener) !== "object" || listener === null)) {
+      return undefined;
+    }
+    var eventMap = listenerMap.get(listener);
+    return eventMap == null ? undefined : eventMap.get(eventName);
+  }
+  function deleteListenerRecord(listenerMap, eventName, listener) {
+    if (typeof listener !== "function" && (_typeof(listener) !== "object" || listener === null)) {
+      return;
+    }
+    var eventMap = listenerMap.get(listener);
+    if (eventMap != null) {
+      eventMap["delete"](eventName);
+    }
+  }
+  function setListenerRecord(listenerMap, eventName, listener, listenerRecord) {
+    if (typeof listener !== "function" && (_typeof(listener) !== "object" || listener === null)) {
+      return;
+    }
+    var eventMap = listenerMap.get(listener);
+    if (eventMap == null) {
+      eventMap = new Map();
+      listenerMap.set(listener, eventMap);
+    }
+    eventMap.set(eventName, listenerRecord);
+  }
+  function getAbortSignal(options) {
+    return _typeof(options) === "object" && options !== null ? options.signal : undefined;
+  }
+  function shouldRunOnce(options) {
+    return _typeof(options) === "object" && options !== null && options.once === true;
+  }
+  function spyOnEventTarget(baseObject, eventNames, humanReadablePath, logObject) {
+    if (baseObject == null) {
+      console.warn("Cannot spy on ".concat(humanReadablePath, ": object is unavailable"));
+      return null;
+    }
+    var oldAddEventListener = baseObject.addEventListener;
+    var oldRemoveEventListener = baseObject.removeEventListener;
+    var listenerMap = new WeakMap();
+    if (oldAddEventListener == null || oldRemoveEventListener == null) {
+      console.warn("Cannot spy on ".concat(humanReadablePath, ": EventTarget unavailable"));
+      return null;
+    }
+    baseObject.addEventListener = function addEventListener(type, listener, options) {
+      if (!eventNames.includes(type) || typeof listener !== "function" && (_typeof(listener) !== "object" || listener === null)) {
+        return oldAddEventListener.call(this, type, listener, options);
+      }
+      Logger.onEventListenerAdd(humanReadablePath, type, listener);
+      getEventLog(logObject, type).addEventListener.push({
+        self: this,
+        id: generateId(),
+        date: Date.now(),
+        type: type,
+        listener: listener,
+        options: options
+      });
+      var listenerKey = getListenerKey(type, options);
+      var existingRecord = getListenerRecord(listenerMap, listenerKey, listener);
+      if (existingRecord != null) {
+        return oldAddEventListener.call(this, type, existingRecord.wrappedListener, options);
+      }
+      var signal = getAbortSignal(options);
+      var runOnce = shouldRunOnce(options);
+      var listenerRecord;
+      var wrappedListener = function emeSpyEventListener(event) {
+        if (runOnce) {
+          var _listenerRecord;
+          deleteListenerRecord(listenerMap, listenerKey, listener);
+          if (((_listenerRecord = listenerRecord) === null || _listenerRecord === void 0 ? void 0 : _listenerRecord.abortHandler) != null) {
+            signal === null || signal === void 0 || signal.removeEventListener("abort", listenerRecord.abortHandler);
+          }
+        }
+        Logger.onEvent("".concat(humanReadablePath, ".").concat(type), event);
+        getEventLog(logObject, type).listenerCalls.push({
+          self: this,
+          id: generateId(),
+          date: Date.now(),
+          event: event,
+          listener: listener
+        });
+        if (typeof listener === "function") {
+          return listener.call(this, event);
+        }
+        return listener.handleEvent(event);
+      };
+      listenerRecord = {
+        abortHandler: undefined,
+        signal: signal,
+        wrappedListener: wrappedListener
+      };
+      if ((signal === null || signal === void 0 ? void 0 : signal.aborted) === true) {
+        return oldAddEventListener.call(this, type, wrappedListener, options);
+      }
+      if (signal != null) {
+        listenerRecord.abortHandler = function onAbort() {
+          deleteListenerRecord(listenerMap, listenerKey, listener);
+        };
+        signal.addEventListener("abort", listenerRecord.abortHandler, {
+          once: true
+        });
+      }
+      setListenerRecord(listenerMap, listenerKey, listener, listenerRecord);
+      return oldAddEventListener.call(this, type, wrappedListener, options);
+    };
+    baseObject.removeEventListener = function removeEventListener(type, listener, options) {
+      var listenerKey = getListenerKey(type, options);
+      var listenerRecord = getListenerRecord(listenerMap, listenerKey, listener);
+      if (!eventNames.includes(type) || listener == null || listenerRecord == null) {
+        return oldRemoveEventListener.call(this, type, listener, options);
+      }
+      Logger.onEventListenerRemove(humanReadablePath, type, listener);
+      getEventLog(logObject, type).removeEventListener.push({
+        self: this,
+        id: generateId(),
+        date: Date.now(),
+        type: type,
+        listener: listener,
+        options: options
+      });
+      deleteListenerRecord(listenerMap, listenerKey, listener);
+      if (listenerRecord.abortHandler != null) {
+        var _listenerRecord$signa;
+        (_listenerRecord$signa = listenerRecord.signal) === null || _listenerRecord$signa === void 0 || _listenerRecord$signa.removeEventListener("abort", listenerRecord.abortHandler);
+      }
+      return oldRemoveEventListener.call(this, type, listenerRecord.wrappedListener, options);
+    };
+    return function stopSpyingOnEventTarget() {
+      baseObject.addEventListener = oldAddEventListener;
+      baseObject.removeEventListener = oldRemoveEventListener;
+    };
   }
 
   /**
@@ -205,13 +490,18 @@
    * @returns {Function} - function which deactivates the spy when called.
    */
   function spyOnMethods(baseObject, methodNames, humanReadablePath, logObject) {
+    if (baseObject == null) {
+      console.warn("Cannot spy on ".concat(humanReadablePath, ": object is unavailable"));
+      return null;
+    }
     var baseObjectMethods = methodNames.reduce(function (acc, methodName) {
       acc[methodName] = baseObject[methodName];
       return acc;
     }, {});
     var _loop = function _loop() {
       var methodName = methodNames[i];
-      var completePath = "".concat(humanReadablePath, ".").concat(methodName);
+      var methodLabel = _typeof(methodName) === "symbol" ? methodName.toString() : methodName;
+      var completePath = "".concat(humanReadablePath, ".").concat(methodLabel);
       var oldMethod = baseObject[methodName];
       if (!oldMethod) {
         console.warn("No method in ".concat(completePath));
@@ -270,6 +560,106 @@
         var methodName = methodNames[_i];
         baseObject[methodName] = baseObjectMethods[methodName];
       }
+    };
+  }
+
+  /**
+   * Spy access and updates of an Object's read-only properties:
+   *   - log every access/updates
+   *   - add entries in a logging object
+   *
+   * @param {Object} baseObject - Object in which the property is.
+   * For example to spy on the HTMLMediaElement property `currentTime`, you will
+   * have to set here `HTMLMediaElement.prototype`.
+   * @param {Object} baseDescriptors - Descriptors for the spied properties.
+   * The keys are the properties' names, the values are the properties'
+   * descriptors.
+   * @param {Array.<string>} propertyNames - Every properties you want to spy on.
+   * @param {string} humanReadablePath - Path to the property. Used for logging
+   * purposes.
+   * For example `"HTMLMediaElement.prototype"`, for spies of HTMLMediaElement's
+   * class properties.
+   * @param {Object} logObject - Object where infos about the properties access
+   * will be added.
+   * The methods' name will be the key of the object.
+   *
+   * The values will be an object with a single key ``get``, corresponding to
+   * property accesses
+   *
+   * This key will then have as value an array of object.
+   *
+   *  - self {Object}: Reference to the baseObject argument.
+   *
+   *  - id {number}: a uniquely generated ID for any stubbed property/methods with
+   *    this library.
+   *
+   *  - date {number}: Timestamp at the time of the property access.
+   *
+   *  - value {*}: value of the property at the time of access.
+   *
+   * @returns {Function} - function which deactivates the spy when called.
+   */
+  function spyOnReadOnlyProperties(baseObject, baseDescriptors, propertyNames, humanReadablePath, logObject) {
+    var _loop = function _loop() {
+      var propertyName = propertyNames[i];
+      var baseDescriptor = baseDescriptors[propertyName];
+      var completePath = "".concat(humanReadablePath, ".").concat(propertyName);
+      if (!baseDescriptor) {
+        console.warn("No descriptor for property ".concat(completePath));
+        return 1; // continue
+      }
+      Object.defineProperty(baseObject, propertyName, {
+        get: function get() {
+          var value = baseDescriptor.get.bind(this)();
+          Logger.onPropertyAccess(completePath, value);
+          var currentLogObject = {
+            self: this,
+            id: generateId(),
+            date: Date.now(),
+            value: value
+          };
+          if (!logObject[propertyName]) {
+            logObject[propertyName] = {
+              get: []
+            };
+          }
+          logObject[propertyName].get.push(currentLogObject);
+          return value;
+        }
+      });
+    };
+    for (var i = 0; i < propertyNames.length; i++) {
+      if (_loop()) continue;
+    }
+    return function stopSpyingOnReadOnlyProperties() {
+      Object.defineProperties(baseObject, propertyNames.reduce(function (acc, propertyName) {
+        acc[propertyName] = baseDescriptors[propertyName];
+        return acc;
+      }, {}));
+    };
+  }
+
+  function spyOnHTMLMediaElement() {
+    if (typeof HTMLMediaElement === "undefined") {
+      console.warn("Cannot spy on HTMLMediaElement: native object is unavailable");
+      return null;
+    }
+    if (EME_CALLS.HTMLMediaElement == null) {
+      EME_CALLS.HTMLMediaElement = {
+        properties: {},
+        eventListeners: {}
+      };
+    }
+    var htmlMediaElementDescriptors = Object.getOwnPropertyDescriptors(HTMLMediaElement.prototype);
+    var resetMethods = spyOnMethods(HTMLMediaElement.prototype, ["setMediaKeys"], "HTMLMediaElement.prototype", EME_CALLS);
+    var resetReadOnlyProperties = spyOnReadOnlyProperties(HTMLMediaElement.prototype, htmlMediaElementDescriptors, ["mediaKeys"], "HTMLMediaElement.prototype", EME_CALLS.HTMLMediaElement.properties);
+    var resetEventHandlers = spyOnEventHandlerProperties(HTMLMediaElement.prototype, ["onencrypted", "onwaitingforkey"], "HTMLMediaElement.prototype", EME_CALLS.HTMLMediaElement.eventListeners);
+    var resetEventTarget = spyOnEventTarget(HTMLMediaElement.prototype, ["encrypted", "waitingforkey"], "HTMLMediaElement.prototype", EME_CALLS.HTMLMediaElement.eventListeners);
+    return function stopSpyingOnHTMLMediaElement() {
+      resetEventTarget && resetEventTarget();
+      resetEventHandlers && resetEventHandlers();
+      resetReadOnlyProperties && resetReadOnlyProperties();
+      resetMethods && resetMethods();
     };
   }
 
@@ -382,85 +772,10 @@
     };
   }
 
-  /**
-   * Spy access and updates of an Object's read-only properties:
-   *   - log every access/updates
-   *   - add entries in a logging object
-   *
-   * @param {Object} baseObject - Object in which the property is.
-   * For example to spy on the HTMLMediaElement property `currentTime`, you will
-   * have to set here `HTMLMediaElement.prototype`.
-   * @param {Object} baseDescriptors - Descriptors for the spied properties.
-   * The keys are the properties' names, the values are the properties'
-   * descriptors.
-   * @param {Array.<string>} propertyNames - Every properties you want to spy on.
-   * @param {string} humanReadablePath - Path to the property. Used for logging
-   * purposes.
-   * For example `"HTMLMediaElement.prototype"`, for spies of HTMLMediaElement's
-   * class properties.
-   * @param {Object} logObject - Object where infos about the properties access
-   * will be added.
-   * The methods' name will be the key of the object.
-   *
-   * The values will be an object with a single key ``get``, corresponding to
-   * property accesses
-   *
-   * This key will then have as value an array of object.
-   *
-   *  - self {Object}: Reference to the baseObject argument.
-   *
-   *  - id {number}: a uniquely generated ID for any stubbed property/methods with
-   *    this library.
-   *
-   *  - date {number}: Timestamp at the time of the property access.
-   *
-   *  - value {*}: value of the property at the time of access.
-   *
-   * @returns {Function} - function which deactivates the spy when called.
-   */
-  function spyOnReadOnlyProperties(baseObject, baseDescriptors, propertyNames, humanReadablePath, logObject) {
-    var _loop = function _loop() {
-      var propertyName = propertyNames[i];
-      var baseDescriptor = baseDescriptors[propertyName];
-      var completePath = "".concat(humanReadablePath, ".").concat(propertyName);
-      if (!baseDescriptor) {
-        console.warn("No descriptor for property ".concat(completePath));
-        return 1; // continue
-      }
-      Object.defineProperty(baseObject, propertyName, {
-        get: function get() {
-          var value = baseDescriptor.get.bind(this)();
-          Logger.onPropertyAccess(completePath, value);
-          var currentLogObject = {
-            self: this,
-            id: generateId(),
-            date: Date.now(),
-            value: value
-          };
-          if (!logObject[propertyName]) {
-            logObject[propertyName] = {
-              get: []
-            };
-          }
-          logObject[propertyName].get.push(currentLogObject);
-          return value;
-        }
-      });
-    };
-    for (var i = 0; i < propertyNames.length; i++) {
-      if (_loop()) continue;
-    }
-    return function stopSpyingOnReadOnlyProperties() {
-      Object.defineProperties(baseObject, propertyNames.reduce(function (acc, propertyName) {
-        acc[propertyName] = baseDescriptors[propertyName];
-        return acc;
-      }, {}));
-    };
-  }
-
   function spyOnWholeObject(BaseObject, objectName, readOnlyPropertyNames, propertyNames, staticMethodNames, methodNames, loggingObject) {
     if (BaseObject == null || !BaseObject.prototype) {
-      throw new Error("Invalid object");
+      console.warn("Cannot spy on ".concat(objectName, ": native object is unavailable"));
+      return null;
     }
     if (loggingObject[objectName] == null) {
       loggingObject[objectName] = {
@@ -468,7 +783,7 @@
         methods: {},
         staticMethods: {},
         properties: {},
-        eventListeners: {} // TODO
+        eventListeners: {}
       };
     }
     function StubbedObject() {
@@ -496,6 +811,14 @@
       spyObj.responseDate = Date.now();
       return baseObject;
     }
+    StubbedObject.prototype = BaseObject.prototype;
+    if (Object.setPrototypeOf) {
+      try {
+        Object.setPrototypeOf(StubbedObject, BaseObject);
+      } catch (e) {
+        console.warn("Cannot copy ".concat(objectName, "'s static prototype"), e);
+      }
+    }
     var unspyStaticMethods = spyOnMethods(BaseObject, staticMethodNames, objectName, loggingObject[objectName].staticMethods);
     staticMethodNames.forEach(function (method) {
       StubbedObject[method] = BaseObject[method].bind(BaseObject);
@@ -514,8 +837,44 @@
     };
   }
 
-  function spyOnMediaKeySession() {
+  function spyOnMediaEncryptedEvent() {
     return spyOnWholeObject(
+    // Object to spy on
+    NativeMediaEncryptedEvent,
+    // name in window
+    "MediaEncryptedEvent",
+    // read-only properties
+    ["initDataType", "initData"],
+    // regular properties
+    [],
+    // static methods
+    [],
+    // methods
+    [],
+    // global logging object
+    EME_CALLS);
+  }
+
+  function spyOnMediaKeyMessageEvent() {
+    return spyOnWholeObject(
+    // Object to spy on
+    NativeMediaKeyMessageEvent,
+    // name in window
+    "MediaKeyMessageEvent",
+    // read-only properties
+    ["messageType", "message"],
+    // regular properties
+    [],
+    // static methods
+    [],
+    // methods
+    [],
+    // global logging object
+    EME_CALLS);
+  }
+
+  function spyOnMediaKeySession() {
+    var resetWholeObject = spyOnWholeObject(
     // Object to spy on
     NativeMediaKeySession,
     // name in window
@@ -528,6 +887,43 @@
     [],
     // methods
     ["generateRequest", "load", "update", "close", "remove"],
+    // global logging object
+    EME_CALLS);
+    if (NativeMediaKeySession == null || NativeMediaKeySession.prototype == null) {
+      return resetWholeObject;
+    }
+    if (EME_CALLS.MediaKeySession == null) {
+      EME_CALLS.MediaKeySession = {
+        "new": [],
+        methods: {},
+        staticMethods: {},
+        properties: {},
+        eventListeners: {}
+      };
+    }
+    var resetEventHandlers = spyOnEventHandlerProperties(NativeMediaKeySession.prototype, ["onmessage", "onkeystatuseschange"], "MediaKeySession.prototype", EME_CALLS.MediaKeySession.eventListeners);
+    var resetEventTarget = spyOnEventTarget(NativeMediaKeySession.prototype, ["message", "keystatuseschange"], "MediaKeySession.prototype", EME_CALLS.MediaKeySession.eventListeners);
+    return function stopSpyingOnMediaKeySession() {
+      resetEventTarget && resetEventTarget();
+      resetEventHandlers && resetEventHandlers();
+      resetWholeObject && resetWholeObject();
+    };
+  }
+
+  function spyOnMediaKeyStatusMap() {
+    return spyOnWholeObject(
+    // Object to spy on
+    NativeMediaKeyStatusMap,
+    // name in window
+    "MediaKeyStatusMap",
+    // read-only properties
+    ["size"],
+    // regular properties
+    [],
+    // static methods
+    [],
+    // methods
+    ["get", "has", "entries", "keys", "values", "forEach", Symbol.iterator],
     // global logging object
     EME_CALLS);
   }
@@ -563,17 +959,13 @@
     // static methods
     [],
     // methods
-    ["createSession", "setServerCertificate"],
+    ["createSession", "getStatusForPolicy", "setServerCertificate"],
     // global logging object
     EME_CALLS);
   }
 
   function spyOnRequestMediaKeySystemAccess() {
     return spyOnMethods(navigator, ["requestMediaKeySystemAccess"], "navigator", EME_CALLS);
-  }
-
-  function spyOnSetMediaKeys() {
-    return spyOnMethods(HTMLMediaElement.prototype, ["setMediaKeys"], "HTMLMediaElement.prototype", EME_CALLS);
   }
 
   var resetSpies = null;
@@ -585,7 +977,7 @@
     if (resetSpies != null) {
       resetSpies();
     }
-    var resetSpyFunctions = [spyOnMediaKeys(), spyOnMediaKeySession(), spyOnMediaKeySystemAccess(), spyOnRequestMediaKeySystemAccess(), spyOnSetMediaKeys()].filter(function (cb) {
+    var resetSpyFunctions = [spyOnMediaKeys(), spyOnMediaKeyStatusMap(), spyOnMediaKeySession(), spyOnMediaKeySystemAccess(), spyOnMediaEncryptedEvent(), spyOnMediaKeyMessageEvent(), spyOnRequestMediaKeySystemAccess(), spyOnHTMLMediaElement()].filter(function (cb) {
       return cb;
     });
     resetSpies = function resetEverySpies() {

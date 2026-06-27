@@ -1,10 +1,12 @@
 /**
- * Define the logger for the MSE-spy.
+ * Define the logger for EMESpy.
  * Allows to re-define a specific logger on runtime / before applying this
  * script.
  * @type {Object}
  */
-const Logger = window.MSESpyLogger || {
+const currentWindow = typeof window !== "undefined" ? window : {};
+
+const defaultLogger = {
   /**
    * Triggered each time a property is accessed.
    * @param {string} pathString - human-readable path to the property.
@@ -102,6 +104,30 @@ const Logger = window.MSESpyLogger || {
   onFunctionPromiseReject(pathName, value) {
     console.error(`>>> ${pathName} rejected:`, value);
   },
+
+  onEventListenerAdd(pathName, eventName, listener) {
+    console.debug(
+      `>>> ${pathName}.addEventListener("${eventName}") called:`,
+      listener,
+    );
+  },
+
+  onEventListenerRemove(pathName, eventName, listener) {
+    console.debug(
+      `>>> ${pathName}.removeEventListener("${eventName}") called:`,
+      listener,
+    );
+  },
+
+  onEvent(pathName, event) {
+    console.debug(`>>> ${pathName} event received:`, event);
+  },
 };
+
+const Logger = Object.assign(
+  {},
+  defaultLogger,
+  currentWindow.EMESpyLogger || currentWindow.MSESpyLogger,
+);
 
 export default Logger;

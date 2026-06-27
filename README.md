@@ -17,7 +17,15 @@ It logs and registers when any of the following methods are called:
   - ``MediaKeySession.prototype.close``
   - ``MediaKeySession.prototype.remove``
   - ``MediaKeys.prototype.createSession``
+  - ``MediaKeys.prototype.getStatusForPolicy``
   - ``MediaKeys.prototype.setServerCertificate``
+  - ``MediaKeyStatusMap.prototype.get``
+  - ``MediaKeyStatusMap.prototype.has``
+  - ``MediaKeyStatusMap.prototype.entries``
+  - ``MediaKeyStatusMap.prototype.keys``
+  - ``MediaKeyStatusMap.prototype.values``
+  - ``MediaKeyStatusMap.prototype.forEach``
+  - ``MediaKeyStatusMap.prototype[Symbol.iterator]``
   - ``HTMLMediaElement.prototype.setMediaKeys``
 
 It also logs when the following properties are accessed:
@@ -26,6 +34,23 @@ It also logs when the following properties are accessed:
   - ``MediaKeySession.prototype.expiration``
   - ``MediaKeySession.prototype.closed``
   - ``MediaKeySession.prototype.keyStatuses``
+  - ``MediaKeyStatusMap.prototype.size``
+  - ``MediaEncryptedEvent.prototype.initDataType``
+  - ``MediaEncryptedEvent.prototype.initData``
+  - ``MediaKeyMessageEvent.prototype.messageType``
+  - ``MediaKeyMessageEvent.prototype.message``
+  - ``HTMLMediaElement.prototype.mediaKeys``
+
+It logs EME event handler properties, listener registrations, listener removals
+and listener calls for:
+  - ``HTMLMediaElement.prototype.onencrypted``
+  - ``HTMLMediaElement.prototype.onwaitingforkey``
+  - ``HTMLMediaElement.prototype.addEventListener("encrypted", ...)``
+  - ``HTMLMediaElement.prototype.addEventListener("waitingforkey", ...)``
+  - ``MediaKeySession.prototype.onmessage``
+  - ``MediaKeySession.prototype.onkeystatuseschange``
+  - ``MediaKeySession.prototype.addEventListener("message", ...)``
+  - ``MediaKeySession.prototype.addEventListener("keystatuseschange", ...)``
 
 The registered data is:
 

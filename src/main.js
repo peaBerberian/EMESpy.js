@@ -1,9 +1,12 @@
 import { getEMECalls, resetEMECalls } from "./constants.js";
+import spyOnHTMLMediaElement from "./spyOnHTMLMediaElement.js";
+import spyOnMediaEncryptedEvent from "./spyOnMediaEncryptedEvent.js";
+import spyOnMediaKeyMessageEvent from "./spyOnMediaKeyMessageEvent.js";
 import spyOnMediaKeySession from "./spyOnMediaKeySession.js";
+import spyOnMediaKeyStatusMap from "./spyOnMediaKeyStatusMap.js";
 import spyOnMediaKeySystemAccess from "./spyOnMediaKeySystemAccess.js";
 import spyOnMediaKeys from "./spyOnMediaKeys.js";
 import spyOnRequestMediaKeySystemAccess from "./spyOnRequestMediaKeySystemAccess.js";
-import spyOnSetMediaKeys from "./spyOnSetMediaKeys.js";
 import Logger from "./utils/logger.js";
 
 let resetSpies = null;
@@ -18,10 +21,13 @@ function start() {
 
   const resetSpyFunctions = [
     spyOnMediaKeys(),
+    spyOnMediaKeyStatusMap(),
     spyOnMediaKeySession(),
     spyOnMediaKeySystemAccess(),
+    spyOnMediaEncryptedEvent(),
+    spyOnMediaKeyMessageEvent(),
     spyOnRequestMediaKeySystemAccess(),
-    spyOnSetMediaKeys(),
+    spyOnHTMLMediaElement(),
   ].filter((cb) => cb);
 
   resetSpies = function resetEverySpies() {

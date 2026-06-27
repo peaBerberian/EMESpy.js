@@ -1,16 +1,16 @@
-import { EME_CALLS, NativeMediaKeys } from "./constants.js";
+import { EME_CALLS, NativeMediaKeyMessageEvent } from "./constants.js";
 import spyOnWholeObject from "./utils/spyOnWholeObject.js";
 
-export default function spyOnMediaKeys() {
+export default function spyOnMediaKeyMessageEvent() {
   return spyOnWholeObject(
     // Object to spy on
-    NativeMediaKeys,
+    NativeMediaKeyMessageEvent,
 
     // name in window
-    "MediaKeys",
+    "MediaKeyMessageEvent",
 
     // read-only properties
-    [],
+    ["messageType", "message"],
 
     // regular properties
     [],
@@ -19,7 +19,7 @@ export default function spyOnMediaKeys() {
     [],
 
     // methods
-    ["createSession", "getStatusForPolicy", "setServerCertificate"],
+    [],
 
     // global logging object
     EME_CALLS,

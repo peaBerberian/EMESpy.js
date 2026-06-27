@@ -14,14 +14,22 @@ function resetEMECalls() {
   });
 }
 
-const NativeMediaKeys = window.MediaKeys;
-const NativeMediaKeySession = window.MediaKeySession;
-const NativeMediaKeySystemAccess = window.MediaKeySystemAccess;
+const currentWindow = typeof window !== "undefined" ? window : {};
+
+const NativeMediaEncryptedEvent = currentWindow.MediaEncryptedEvent;
+const NativeMediaKeyMessageEvent = currentWindow.MediaKeyMessageEvent;
+const NativeMediaKeys = currentWindow.MediaKeys;
+const NativeMediaKeySession = currentWindow.MediaKeySession;
+const NativeMediaKeyStatusMap = currentWindow.MediaKeyStatusMap;
+const NativeMediaKeySystemAccess = currentWindow.MediaKeySystemAccess;
 
 export {
   EME_CALLS,
   getEMECalls,
+  NativeMediaEncryptedEvent,
+  NativeMediaKeyMessageEvent,
   NativeMediaKeySession,
+  NativeMediaKeyStatusMap,
   NativeMediaKeySystemAccess,
   NativeMediaKeys,
   resetEMECalls,

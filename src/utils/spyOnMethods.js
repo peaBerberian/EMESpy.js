@@ -65,6 +65,11 @@ export default function spyOnMethods(
   humanReadablePath,
   logObject,
 ) {
+  if (baseObject == null) {
+    console.warn(`Cannot spy on ${humanReadablePath}: object is unavailable`);
+    return null;
+  }
+
   const baseObjectMethods = methodNames.reduce((acc, methodName) => {
     acc[methodName] = baseObject[methodName];
     return acc;
@@ -72,7 +77,9 @@ export default function spyOnMethods(
 
   for (let i = 0; i < methodNames.length; i++) {
     const methodName = methodNames[i];
-    const completePath = `${humanReadablePath}.${methodName}`;
+    const methodLabel =
+      typeof methodName === "symbol" ? methodName.toString() : methodName;
+    const completePath = `${humanReadablePath}.${methodLabel}`;
     const oldMethod = baseObject[methodName];
 
     if (!oldMethod) {
