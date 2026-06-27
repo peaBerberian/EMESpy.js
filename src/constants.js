@@ -9,7 +9,7 @@ function getEMECalls() {
 }
 
 function resetEMECalls() {
-  Object.keys(EME_CALLS).forEach(key => {
+  Object.keys(EME_CALLS).forEach((key) => {
     delete EME_CALLS[key];
   });
 }
@@ -21,8 +21,8 @@ const NativeMediaKeySystemAccess = window.MediaKeySystemAccess;
 export {
   EME_CALLS,
   getEMECalls,
-  resetEMECalls,
-  NativeMediaKeys,
   NativeMediaKeySession,
   NativeMediaKeySystemAccess,
+  NativeMediaKeys,
+  resetEMECalls,
 };

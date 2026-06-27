@@ -21,6 +21,22 @@
   var NativeMediaKeySession = window.MediaKeySession;
   var NativeMediaKeySystemAccess = window.MediaKeySystemAccess;
 
+  function _construct(t, e, r) {
+    if (_isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
+    var o = [null];
+    o.push.apply(o, e);
+    var p = new (t.bind.apply(t, o))();
+    return p;
+  }
+  function _isNativeReflectConstruct() {
+    try {
+      var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    } catch (t) {}
+    return (_isNativeReflectConstruct = function () {
+      return !!t;
+    })();
+  }
+
   /**
    * Define the logger for the MSE-spy.
    * Allows to re-define a specific logger on runtime / before applying this
@@ -28,7 +44,6 @@
    * @type {Object}
    */
   var Logger = window.MSESpyLogger || {
-    /* eslint-disable no-console */
     /**
      * Triggered each time a property is accessed.
      * @param {string} pathString - human-readable path to the property.
@@ -116,42 +131,8 @@
      */
     onFunctionPromiseReject: function onFunctionPromiseReject(pathName, value) {
       console.error(">>> ".concat(pathName, " rejected:"), value);
-    } /* eslint-enable no-console */
+    }
   };
-
-  function _setPrototypeOf(o, p) {
-    _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-      o.__proto__ = p;
-      return o;
-    };
-    return _setPrototypeOf(o, p);
-  }
-  function _isNativeReflectConstruct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
-    try {
-      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-  function _construct(Parent, args, Class) {
-    if (_isNativeReflectConstruct()) {
-      _construct = Reflect.construct.bind();
-    } else {
-      _construct = function _construct(Parent, args, Class) {
-        var a = [null];
-        a.push.apply(a, args);
-        var Constructor = Function.bind.apply(Parent, a);
-        var instance = new Constructor();
-        if (Class) _setPrototypeOf(instance, Class.prototype);
-        return instance;
-      };
-    }
-    return _construct.apply(null, arguments);
-  }
 
   var id = 0;
 
@@ -230,11 +211,10 @@
     }, {});
     var _loop = function _loop() {
       var methodName = methodNames[i];
-      var completePath = humanReadablePath + "." + methodName;
+      var completePath = "".concat(humanReadablePath, ".").concat(methodName);
       var oldMethod = baseObject[methodName];
       if (!oldMethod) {
-        /* eslint-disable-next-line no-console */
-        console.warn("No method in " + completePath);
+        console.warn("No method in ".concat(completePath));
         return 1; // continue
       }
       baseObject[methodName] = function () {
@@ -294,83 +274,6 @@
   }
 
   /**
-   * Spy access and updates of an Object's read-only properties:
-   *   - log every access/updates
-   *   - add entries in a logging object
-   *
-   * @param {Object} baseObject - Object in which the property is.
-   * For example to spy on the HTMLMediaElement property `currentTime`, you will
-   * have to set here `HTMLMediaElement.prototype`.
-   * @param {Object} baseDescriptors - Descriptors for the spied properties.
-   * The keys are the properties' names, the values are the properties'
-   * descriptors.
-   * @param {Array.<string>} propertyNames - Every properties you want to spy on.
-   * @param {string} humanReadablePath - Path to the property. Used for logging
-   * purposes.
-   * For example `"HTMLMediaElement.prototype"`, for spies of HTMLMediaElement's
-   * class properties.
-   * @param {Object} logObject - Object where infos about the properties access
-   * will be added.
-   * The methods' name will be the key of the object.
-   *
-   * The values will be an object with a single key ``get``, corresponding to
-   * property accesses
-   *
-   * This key will then have as value an array of object.
-   *
-   *  - self {Object}: Reference to the baseObject argument.
-   *
-   *  - id {number}: a uniquely generated ID for any stubbed property/methods with
-   *    this library.
-   *
-   *  - date {number}: Timestamp at the time of the property access.
-   *
-   *  - value {*}: value of the property at the time of access.
-   *
-   * @returns {Function} - function which deactivates the spy when called.
-   */
-  function spyOnReadOnlyProperties(baseObject, baseDescriptors, propertyNames, humanReadablePath, logObject) {
-    var _loop = function _loop() {
-      var propertyName = propertyNames[i];
-      var baseDescriptor = baseDescriptors[propertyName];
-      var completePath = humanReadablePath + "." + propertyName;
-      if (!baseDescriptor) {
-        /* eslint-disable-next-line no-console */
-        console.warn("No descriptor for property " + completePath);
-        return 1; // continue
-      }
-      Object.defineProperty(baseObject, propertyName, {
-        get: function get() {
-          var value = baseDescriptor.get.bind(this)();
-          Logger.onPropertyAccess(completePath, value);
-          var currentLogObject = {
-            self: this,
-            id: generateId(),
-            date: Date.now(),
-            value: value
-          };
-          if (!logObject[propertyName]) {
-            logObject[propertyName] = {
-              get: []
-            };
-          }
-          logObject[propertyName].get.push(currentLogObject);
-          return value;
-        }
-      });
-    };
-    for (var i = 0; i < propertyNames.length; i++) {
-      if (_loop()) continue;
-    }
-    return function stopSpyingOnReadOnlyProperties() {
-      Object.defineProperties(baseObject, propertyNames.reduce(function (acc, propertyName) {
-        acc[propertyName] = baseDescriptors[propertyName];
-        return acc;
-      }, {}));
-    };
-  }
-
-  /**
    * Spy access and updates of an Object's read & write properties:
    *   - log every access/updates
    *   - add entries in a logging object
@@ -425,10 +328,9 @@
     var _loop = function _loop() {
       var propertyName = propertyNames[i];
       var baseDescriptor = baseDescriptors[propertyName];
-      var completePath = humanReadablePath + "." + propertyName;
+      var completePath = "".concat(humanReadablePath, ".").concat(propertyName);
       if (!baseDescriptor) {
-        /* eslint-disable-next-line no-console */
-        console.warn("No descriptor for property " + completePath);
+        console.warn("No descriptor for property ".concat(completePath));
         return 1; // continue
       }
       Object.defineProperty(baseObject, propertyName, {
@@ -480,6 +382,82 @@
     };
   }
 
+  /**
+   * Spy access and updates of an Object's read-only properties:
+   *   - log every access/updates
+   *   - add entries in a logging object
+   *
+   * @param {Object} baseObject - Object in which the property is.
+   * For example to spy on the HTMLMediaElement property `currentTime`, you will
+   * have to set here `HTMLMediaElement.prototype`.
+   * @param {Object} baseDescriptors - Descriptors for the spied properties.
+   * The keys are the properties' names, the values are the properties'
+   * descriptors.
+   * @param {Array.<string>} propertyNames - Every properties you want to spy on.
+   * @param {string} humanReadablePath - Path to the property. Used for logging
+   * purposes.
+   * For example `"HTMLMediaElement.prototype"`, for spies of HTMLMediaElement's
+   * class properties.
+   * @param {Object} logObject - Object where infos about the properties access
+   * will be added.
+   * The methods' name will be the key of the object.
+   *
+   * The values will be an object with a single key ``get``, corresponding to
+   * property accesses
+   *
+   * This key will then have as value an array of object.
+   *
+   *  - self {Object}: Reference to the baseObject argument.
+   *
+   *  - id {number}: a uniquely generated ID for any stubbed property/methods with
+   *    this library.
+   *
+   *  - date {number}: Timestamp at the time of the property access.
+   *
+   *  - value {*}: value of the property at the time of access.
+   *
+   * @returns {Function} - function which deactivates the spy when called.
+   */
+  function spyOnReadOnlyProperties(baseObject, baseDescriptors, propertyNames, humanReadablePath, logObject) {
+    var _loop = function _loop() {
+      var propertyName = propertyNames[i];
+      var baseDescriptor = baseDescriptors[propertyName];
+      var completePath = "".concat(humanReadablePath, ".").concat(propertyName);
+      if (!baseDescriptor) {
+        console.warn("No descriptor for property ".concat(completePath));
+        return 1; // continue
+      }
+      Object.defineProperty(baseObject, propertyName, {
+        get: function get() {
+          var value = baseDescriptor.get.bind(this)();
+          Logger.onPropertyAccess(completePath, value);
+          var currentLogObject = {
+            self: this,
+            id: generateId(),
+            date: Date.now(),
+            value: value
+          };
+          if (!logObject[propertyName]) {
+            logObject[propertyName] = {
+              get: []
+            };
+          }
+          logObject[propertyName].get.push(currentLogObject);
+          return value;
+        }
+      });
+    };
+    for (var i = 0; i < propertyNames.length; i++) {
+      if (_loop()) continue;
+    }
+    return function stopSpyingOnReadOnlyProperties() {
+      Object.defineProperties(baseObject, propertyNames.reduce(function (acc, propertyName) {
+        acc[propertyName] = baseDescriptors[propertyName];
+        return acc;
+      }, {}));
+    };
+  }
+
   function spyOnWholeObject(BaseObject, objectName, readOnlyPropertyNames, propertyNames, staticMethodNames, methodNames, loggingObject) {
     if (BaseObject == null || !BaseObject.prototype) {
       throw new Error("Invalid object");
@@ -493,7 +471,6 @@
         eventListeners: {} // TODO
       };
     }
-
     function StubbedObject() {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
@@ -537,24 +514,6 @@
     };
   }
 
-  function spyOnMediaKeys() {
-    return spyOnWholeObject(
-    // Object to spy on
-    NativeMediaKeys,
-    // name in window
-    "MediaKeys",
-    // read-only properties
-    [],
-    // regular properties
-    [],
-    // static methods
-    [],
-    // methods
-    ["createSession", "setServerCertificate"],
-    // global logging object
-    EME_CALLS);
-  }
-
   function spyOnMediaKeySession() {
     return spyOnWholeObject(
     // Object to spy on
@@ -587,6 +546,24 @@
     [],
     // methods
     ["getConfiguration", "createMediaKeys"],
+    // global logging object
+    EME_CALLS);
+  }
+
+  function spyOnMediaKeys() {
+    return spyOnWholeObject(
+    // Object to spy on
+    NativeMediaKeys,
+    // name in window
+    "MediaKeys",
+    // read-only properties
+    [],
+    // regular properties
+    [],
+    // static methods
+    [],
+    // methods
+    ["createSession", "setServerCertificate"],
     // global logging object
     EME_CALLS);
   }

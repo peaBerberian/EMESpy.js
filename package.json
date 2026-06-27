@@ -5,7 +5,9 @@
   "main": "dist/bundle.js",
   "scripts": {
     "build": "rollup -c",
-    "lint": "eslint src/**/*.js"
+    "check": "biome check .",
+    "format": "biome format --write .",
+    "lint": "biome lint ."
   },
   "repository": {
     "type": "git",
@@ -18,10 +20,10 @@
   },
   "homepage": "https://github.com/peaBerberian/EMESpy.js#readme",
   "devDependencies": {
-    "@babel/core": "7.23.2",
-    "@babel/preset-env": "7.23.2",
-    "eslint": "8.51.0",
-    "rollup": "4.1.4",
-    "rollup-plugin-babel": "4.4.0"
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@biomejs/biome": "^2.5.1",
+    "@rollup/plugin-babel": "^7.1.0",
+    "rollup": "^4.62.2"
   }
 }

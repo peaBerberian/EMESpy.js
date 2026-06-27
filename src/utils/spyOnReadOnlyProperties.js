@@ -1,5 +1,5 @@
-import Logger from "./logger.js";
 import generateId from "./generate_id.js";
+import Logger from "./logger.js";
 
 /**
  * Spy access and updates of an Object's read-only properties:
@@ -47,11 +47,10 @@ export default function spyOnReadOnlyProperties(
   for (let i = 0; i < propertyNames.length; i++) {
     const propertyName = propertyNames[i];
     const baseDescriptor = baseDescriptors[propertyName];
-    const completePath = humanReadablePath + "." + propertyName;
+    const completePath = `${humanReadablePath}.${propertyName}`;
 
     if (!baseDescriptor) {
-      /* eslint-disable-next-line no-console */
-      console.warn("No descriptor for property " + completePath);
+      console.warn(`No descriptor for property ${completePath}`);
       continue;
     }
 
@@ -77,12 +76,12 @@ export default function spyOnReadOnlyProperties(
   }
 
   return function stopSpyingOnReadOnlyProperties() {
-    Object.defineProperties(baseObject,
-      propertyNames
-        .reduce((acc, propertyName) => {
-          acc[propertyName] = baseDescriptors[propertyName];
-          return acc;
-        }, {}),
+    Object.defineProperties(
+      baseObject,
+      propertyNames.reduce((acc, propertyName) => {
+        acc[propertyName] = baseDescriptors[propertyName];
+        return acc;
+      }, {}),
     );
   };
 }

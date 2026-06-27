@@ -1,5 +1,5 @@
-import Logger from "./logger.js";
 import generateId from "./generate_id.js";
+import Logger from "./logger.js";
 
 /**
  * Log multiple method calls for an object.
@@ -65,20 +65,18 @@ export default function spyOnMethods(
   humanReadablePath,
   logObject,
 ) {
-  const baseObjectMethods = methodNames
-    .reduce((acc, methodName) => {
-      acc[methodName] = baseObject[methodName];
-      return acc;
-    }, {});
+  const baseObjectMethods = methodNames.reduce((acc, methodName) => {
+    acc[methodName] = baseObject[methodName];
+    return acc;
+  }, {});
 
   for (let i = 0; i < methodNames.length; i++) {
     const methodName = methodNames[i];
-    const completePath = humanReadablePath + "." + methodName;
+    const completePath = `${humanReadablePath}.${methodName}`;
     const oldMethod = baseObject[methodName];
 
     if (!oldMethod) {
-      /* eslint-disable-next-line no-console */
-      console.warn("No method in " + completePath);
+      console.warn(`No method in ${completePath}`);
       continue;
     }
 

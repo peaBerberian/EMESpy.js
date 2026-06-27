@@ -1,8 +1,5 @@
+import { EME_CALLS, NativeMediaKeySystemAccess } from "./constants.js";
 import spyOnWholeObject from "./utils/spyOnWholeObject.js";
-import {
-  EME_CALLS,
-  NativeMediaKeySystemAccess,
-} from "./constants.js";
 
 export default function spyOnMediaKeySystemAccess() {
   return spyOnWholeObject(
@@ -25,6 +22,6 @@ export default function spyOnMediaKeySystemAccess() {
     ["getConfiguration", "createMediaKeys"],
 
     // global logging object
-    EME_CALLS
+    EME_CALLS,
   );
 }

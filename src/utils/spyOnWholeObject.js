@@ -1,7 +1,7 @@
 import Logger from "./logger.js";
 import spyOnMethods from "./spyOnMethods.js";
-import spyOnReadOnlyProperties from "./spyOnReadOnlyProperties.js";
 import spyOnProperties from "./spyOnProperties.js";
+import spyOnReadOnlyProperties from "./spyOnReadOnlyProperties.js";
 
 export default function spyOnWholeObject(
   BaseObject,
@@ -59,8 +59,9 @@ export default function spyOnWholeObject(
     StubbedObject[method] = BaseObject[method].bind(BaseObject);
   });
 
-  const BaseObjectProtoDescriptors =
-    Object.getOwnPropertyDescriptors(BaseObject.prototype);
+  const BaseObjectProtoDescriptors = Object.getOwnPropertyDescriptors(
+    BaseObject.prototype,
+  );
 
   const unspyReadOnlyProps = spyOnReadOnlyProperties(
     BaseObject.prototype,

@@ -5,8 +5,6 @@
  * @type {Object}
  */
 const Logger = window.MSESpyLogger || {
-  /* eslint-disable no-console */
-
   /**
    * Triggered each time a property is accessed.
    * @param {string} pathString - human-readable path to the property.
@@ -104,7 +102,6 @@ const Logger = window.MSESpyLogger || {
   onFunctionPromiseReject(pathName, value) {
     console.error(`>>> ${pathName} rejected:`, value);
   },
-  /* eslint-enable no-console */
 };
 
 export default Logger;

@@ -1,8 +1,5 @@
+import { EME_CALLS, NativeMediaKeys } from "./constants.js";
 import spyOnWholeObject from "./utils/spyOnWholeObject.js";
-import {
-  EME_CALLS,
-  NativeMediaKeys,
-} from "./constants.js";
 
 export default function spyOnMediaKeys() {
   return spyOnWholeObject(
@@ -25,6 +22,6 @@ export default function spyOnMediaKeys() {
     ["createSession", "setServerCertificate"],
 
     // global logging object
-    EME_CALLS
+    EME_CALLS,
   );
 }

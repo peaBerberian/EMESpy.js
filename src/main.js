@@ -1,13 +1,10 @@
-import {
-  getEMECalls,
-  resetEMECalls,
-} from "./constants.js";
-import Logger from "./utils/logger.js";
-import spyOnMediaKeys from "./spyOnMediaKeys.js";
+import { getEMECalls, resetEMECalls } from "./constants.js";
 import spyOnMediaKeySession from "./spyOnMediaKeySession.js";
 import spyOnMediaKeySystemAccess from "./spyOnMediaKeySystemAccess.js";
+import spyOnMediaKeys from "./spyOnMediaKeys.js";
 import spyOnRequestMediaKeySystemAccess from "./spyOnRequestMediaKeySystemAccess.js";
 import spyOnSetMediaKeys from "./spyOnSetMediaKeys.js";
+import Logger from "./utils/logger.js";
 
 let resetSpies = null;
 
@@ -25,10 +22,12 @@ function start() {
     spyOnMediaKeySystemAccess(),
     spyOnRequestMediaKeySystemAccess(),
     spyOnSetMediaKeys(),
-  ].filter(cb => cb);
+  ].filter((cb) => cb);
 
   resetSpies = function resetEverySpies() {
-    resetSpyFunctions.forEach(fn => { fn && fn(); });
+    resetSpyFunctions.forEach((fn) => {
+      fn && fn();
+    });
     resetSpyFunctions.length = 0;
     resetSpies = null;
   };
@@ -43,10 +42,4 @@ function stop() {
   }
 }
 
-export {
-  getEMECalls,
-  resetEMECalls,
-  Logger,
-  start,
-  stop,
-};
+export { getEMECalls, Logger, resetEMECalls, start, stop };

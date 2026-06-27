@@ -1,5 +1,4 @@
-// rollup.config.js
-import babel from "rollup-plugin-babel";
+import { babel } from "@rollup/plugin-babel";
 
 export default {
   input: "src/main.js",
@@ -10,6 +9,9 @@ export default {
   },
   plugins: [
     // only transpile our source code
-    babel({ exclude: "node_modules/**"}),
+    babel({
+      babelHelpers: "bundled",
+      exclude: "node_modules/**",
+    }),
   ],
 };
